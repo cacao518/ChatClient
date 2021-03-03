@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "TcpSocket.h"
+#include "../ETC/TcpSocket.h"
 #include "RoomManager.h"
 #include "UIManager.h"
 
@@ -26,7 +26,7 @@ public:
 	UMyGameInstance();
 	~UMyGameInstance();
 
-	virtual void Init() override;
+	virtual void OnStart() override;
 
 	static UMyGameInstance* GetMyGameInstance();
 	UTcpSocket*		GetSocket();

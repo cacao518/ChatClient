@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UIManager.h"
+#include "../Manager/UIManager.h"
 #include "Engine/World.h"
 #include "Blueprint/UserWidget.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/WidgetTree.h"
-#include "LoginUI.h"
-#include "MyGameInstance.h"
+#include "../UI/LoginUI.h"
+#include "../Manager/MyGameInstance.h"
 #include "Engine/GameInstance.h"
 
 UIManager::UIManager()
@@ -39,5 +39,5 @@ void UIManager::ShowToast(FString & text)
 
 void UIManager::SetGameInstance()
 {
-	_gameInstance = UMyGameInstance::GetMyGameInstance();
+	//_gameInstance = UMyGameInstance::GetMyGameInstance();
 }

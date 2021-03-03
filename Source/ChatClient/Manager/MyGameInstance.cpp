@@ -2,7 +2,7 @@
 
 
 #include "MyGameInstance.h"
-#include "TcpSocket.h"
+#include "../ETC/TcpSocket.h"
 #include "Blueprint/UserWidget.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/TextBlock.h"
@@ -11,22 +11,24 @@
 
 UMyGameInstance* UMyGameInstance::_instance {};
 
-
 UMyGameInstance::UMyGameInstance() :_roomMgr(), _uiMgr()
 {
+
 }
 
 UMyGameInstance::~UMyGameInstance()
 {
-	delete _socket;
+	//delete _socket;
 }
 
-void UMyGameInstance::Init()
+void UMyGameInstance::OnStart()
 {
-	_socket = (UTcpSocket*)(NewObject<UTcpSocket>());
+	Super::OnStart();
+
+	_socket = Cast<UTcpSocket>(NewObject<UTcpSocket>());
 	_instance = this;
 
-	_uiMgr.SetGameInstance();
+	//_uiMgr.SetGameInstance();
 }
 
 UTcpSocket* UMyGameInstance::GetSocket()
@@ -36,6 +38,7 @@ UTcpSocket* UMyGameInstance::GetSocket()
 
 UMyGameInstance * UMyGameInstance::GetMyGameInstance()
 {
+
 	return _instance;
 }
 

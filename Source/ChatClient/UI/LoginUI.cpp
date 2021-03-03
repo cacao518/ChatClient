@@ -1,12 +1,12 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "LoginUI.h"
+#include "../UI/LoginUI.h"
 #include "Components/Button.h"
 #include "Components/EditableText.h"
 #include "Blueprint/WidgetTree.h"
 #include "Engine/World.h"
-#include "MyGameInstance.h"
+#include "../Manager/MyGameInstance.h"
 
 
 void ULoginUI::NativeConstruct()
@@ -15,12 +15,13 @@ void ULoginUI::NativeConstruct()
 	_loginBt = Cast<UButton>(WidgetTree->FindWidget("LoginBt"));
 	_editText = Cast<UEditableText>(WidgetTree->FindWidget("EditText"));
 	_loginBt->OnClicked.AddDynamic(this, &ULoginUI::OnClickedFunc);
+
 }
 
 void ULoginUI::OnClickedFunc()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Test"));
-	UMyGameInstance* gameInstance = (UMyGameInstance*)(GetGameInstance());
+	UMyGameInstance* gameInstance = Cast< UMyGameInstance>(GetGameInstance());
 	if (gameInstance == nullptr) return;
 
 	if (gameInstance->GetSocket()->GetisConnect() == false)
@@ -54,7 +55,7 @@ void ULoginUI::OnClickedFunc()
 
 
 	// 언리얼 클라 확인 패킷 보내기
-	FString sendData = L"i am unreal";
+	FString sendData = L"/i am unreal";
 	if (gameInstance->GetSocket()->GetisConnect() == true)
 		gameInstance->GetSocket()->Send(sendData);
 

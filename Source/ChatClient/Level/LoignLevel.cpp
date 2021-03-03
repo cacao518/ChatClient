@@ -1,11 +1,11 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "LoignLevel.h"
-#include "LoginUI.h"
+#include "../Level/LoignLevel.h"
+#include "../UI/LoginUI.h"
 #include "Engine/World.h"
-#include "MyGameInstance.h"
+#include "../Manager/MyGameInstance.h"
 #include "Blueprint/UserWidget.h"
-#include "TcpSocket.h"
+#include "../ETC/TcpSocket.h"
 
 ALoignLevel::ALoignLevel()
 {
@@ -16,7 +16,8 @@ void ALoignLevel::BeginPlay()
 {
 	Super::BeginPlay();
 
-	_gameInstance = (UMyGameInstance*)(GetGameInstance());
+	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
+	if (_gameInstance == nullptr) return;
 
 	if (loginUI_class != nullptr)
 	{
@@ -41,26 +42,13 @@ void ALoignLevel::Tick(float DeltaSeconds)
 {
 	if (_gameInstance == nullptr) return;
 	if (_gameInstance->GetSocket() == nullptr) return;
-	UE_LOG(LogTemp, Warning, TEXT("1"));
-	FPacket packet;
+
+	FPacket packet = FPacket{ EPacketKind::End, FString("")};
 	if (_gameInstance->GetSocket()->GetisConnect() == true)
 		packet = _gameInstance->GetSocket()->Recv();
-	
-	UE_LOG(LogTemp, Warning, TEXT("2"));
-
+	else
+		return;
 
 	if (packet.pk == EPacketKind::End) return;
 
-
-
-	UE_LOG(LogTemp, Warning, TEXT("3"));
-	if (packet.pk == EPacketKind::Login)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("4"));
-		_gameInstance->GetSocket()->_userInfo->name = packet.data;
-		UGameplayStatics::OpenLevel(this, FName("Lv_Main"));
-		UE_LOG(LogTemp, Warning, TEXT("5"));
-		FString text = TEXT("로그인 되었습니다.");
-		_gameInstance->ShowToast(text);
-	}
 }

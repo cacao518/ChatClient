@@ -9,7 +9,8 @@
 #include "CoreMinimal.h"
 #include <string>
 #include <set>
-#include "Kismet/BlueprintFunctionLibrary.h"
+#include "UObject/Object.h"
+//#include "Kismet/BlueprintFunctionLibrary.h"
 #include "TcpSocket.generated.h"
 
 using namespace std;
@@ -81,7 +82,7 @@ struct FPacket {
 };
 
 UCLASS(Blueprintable, BlueprintType)
-class CHATCLIENT_API UTcpSocket : public UBlueprintFunctionLibrary
+class CHATCLIENT_API UTcpSocket : public UObject
 {
 	GENERATED_BODY()
 
@@ -104,6 +105,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool GetisConnect() { return _connected; };
 
+	void PacketProcessor(const FPacket& packet);
+
+	void GotLogin(const FString& data);
+	void GotSendData(const FString& data);
 
 public:
 	const int BUFSIZE = 1024;

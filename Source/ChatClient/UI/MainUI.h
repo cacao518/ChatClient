@@ -9,9 +9,23 @@
 /**
  * 
  */
+class UEditableText;
+class UButton;
+class UScrollBox;
+
 UCLASS()
 class CHATCLIENT_API UMainUI : public UUserWidget
 {
 	GENERATED_BODY()
 	
+public:
+	virtual void	NativeConstruct() override;
+
+	UFUNCTION()
+		void			OnClickedFunc();
+
+public:
+	UEditableText*	_editText;
+	UButton*		_sendBt;
+	UScrollBox*		_scrollBox;
 };
