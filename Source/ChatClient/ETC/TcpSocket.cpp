@@ -12,11 +12,11 @@
 
 UTcpSocket::UTcpSocket()
 {
-	_userInfo = new FUserInfo();
+	
 }
 UTcpSocket::~UTcpSocket()
 {
-	delete _userInfo;
+	//delete _userInfo;
 }
 void UTcpSocket::ConnectToServer()
 {
@@ -149,7 +149,7 @@ void UTcpSocket::GotLogin(FString data)
 	FString a = _userInfo->name;
 
 	// 레벨이동
-	UGameplayStatics::OpenLevel(gameInstance, FName("Lv_Main"));
+	UGameplayStatics::OpenLevel(gameInstance->GetWorld(), FName("Lv_Main"));
 }
 
 // 메세지 전송 패킷 받았을 때
@@ -185,6 +185,9 @@ void UTcpSocket::GotSendData(const FString & data)
 			scrollBox->ScrollToEnd();
 			UTextBlock* _Text = Cast<UTextBlock>(ballonRightWidget->WidgetTree->FindWidget("textBlock"));
 			_Text->SetText(FText::AsCultureInvariant(finalData));
+
+			UCanvasPanelSlot* _panel = Cast<UCanvasPanelSlot>(ballonRightWidget->WidgetTree->FindWidget("ballon_panel"));
+			_panel->SetSize( GetSizeBallon(finalData) );
 		}
 	}
 	// 상대방이 보냈다면 왼쪽으로 말풍선 출력
@@ -200,8 +203,51 @@ void UTcpSocket::GotSendData(const FString & data)
 			scrollBox->ScrollToEnd();
 			UTextBlock* _Text = Cast<UTextBlock>(ballonLeftWidget->WidgetTree->FindWidget("textBlock"));
 			_Text->SetText(FText::AsCultureInvariant(finalData));
+			UTextBlock* _nameText = Cast<UTextBlock>(ballonLeftWidget->WidgetTree->FindWidget("nameText"));
+			_nameText->SetText(FText::AsCultureInvariant(finalName));
+
+			UCanvasPanelSlot* _panel = Cast<UCanvasPanelSlot>(ballonLeftWidget->WidgetTree->FindWidget("ballon_panel"));
+			_panel->SetSize(GetSizeBallon(finalData));
 		}
 	}
 	
 
+}
+
+FVector2D UTcpSocket::GetSizeBallon(FString data)
+{
+	float x = 0, y = 0;
+	float maxX = 0; // 현재까지 가장 긴 x길이
+
+	for (int i = 0; i < data.Len(); i++)
+	{
+		if (data[i] == '\n') y += 40;					// 줄바꿈
+
+		if (data[i] >= 32 && data[i] <= 126)        // 영어,숫자,기본특수문자  
+		{
+			if (maxX >= 400)
+				y += 40;
+			else if (maxX <= x)
+			{
+				maxX += 15;
+				x = 0;
+			}
+			else
+				x += 15;
+		}
+
+		if (data[i] & 0x80)				// 한글체크 
+		{
+			if (maxX >= 400)
+				y += 40;
+			else if (maxX <= x)
+			{
+				maxX += 30;
+				x = 0;
+			}
+			else
+				x += 30;
+		}
+	}
+	return FVector2D(maxX, y);
 }

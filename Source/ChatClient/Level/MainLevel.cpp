@@ -33,6 +33,9 @@ void AMainLevel::BeginPlay()
 	// 마우스 커서 보이기
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 
+
+	UTcpSocket* tt = _gameInstance->GetSocket();
+
 }
 
 void AMainLevel::Tick(float DeltaSeconds)

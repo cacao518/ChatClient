@@ -110,6 +110,8 @@ public:
 	void GotLogin(FString data);
 	void GotSendData(const FString& data);
 
+	FVector2D GetSizeBallon(FString data);
+
 public:
 	const int BUFSIZE = 1024;
 	ushort	_writeOffset;

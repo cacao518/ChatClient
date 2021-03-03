@@ -13,11 +13,12 @@ UMyGameInstance* UMyGameInstance::_instance {};
 
 UMyGameInstance::UMyGameInstance() :_roomMgr(), _uiMgr()
 {
-
+	
 }
 
 UMyGameInstance::~UMyGameInstance()
 {
+	//delete _socket->_userInfo;
 	//delete _socket;
 }
 
@@ -27,7 +28,7 @@ void UMyGameInstance::OnStart()
 
 	_socket = Cast<UTcpSocket>(NewObject<UTcpSocket>());
 	_instance = this;
-
+	_socket->_userInfo = new FUserInfo();
 	//_uiMgr.SetGameInstance();
 }
 
