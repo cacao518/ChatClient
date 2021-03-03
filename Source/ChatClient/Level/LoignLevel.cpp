@@ -24,6 +24,7 @@ void ALoignLevel::BeginPlay()
 		loginUI = CreateWidget<ULoginUI>(GetWorld(), loginUI_class);
 		if (loginUI != nullptr)
 		{
+			_gameInstance->GetUIManager().SetLoginUI(loginUI);
 			loginUI->AddToViewport();
 		}
 	}

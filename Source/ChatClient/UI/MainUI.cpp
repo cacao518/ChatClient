@@ -2,12 +2,13 @@
 
 
 #include "MainUI.h"
-#include "Components/Button.h"
+//#include "Components/Button.h"
 #include "Components/EditableText.h"
 #include "Blueprint/WidgetTree.h"
 #include "Engine/World.h"
 #include "../Manager/MyGameInstance.h"
-#include "Components/ScrollBox.h"
+//#include "Components/ScrollBox.h"
+#include "Runtime/UMG/Public/UMG.h"
 
 void UMainUI::NativeConstruct()
 {
@@ -15,9 +16,10 @@ void UMainUI::NativeConstruct()
 	if (gameInstance == nullptr) return;
 
 	//UE_LOG(LogTemp, Warning, TEXT("Test"));
+	_scrollBox = Cast<UScrollBox>(WidgetTree->FindWidget("scroll"));
 	_sendBt = Cast<UButton>(WidgetTree->FindWidget("SendBt"));
 	_editText = Cast<UEditableText>(WidgetTree->FindWidget("editText"));
-	_scrollBox = Cast<UScrollBox>(WidgetTree->FindWidget("scrollBox"));
+
 	_sendBt->OnClicked.AddDynamic(this, &UMainUI::OnClickedFunc);
 
 	FString text = TEXT("로그인 되었습니다.");

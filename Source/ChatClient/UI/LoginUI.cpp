@@ -7,7 +7,7 @@
 #include "Blueprint/WidgetTree.h"
 #include "Engine/World.h"
 #include "../Manager/MyGameInstance.h"
-
+#include "../Manager/UIManager.h"
 
 void ULoginUI::NativeConstruct()
 {
@@ -15,7 +15,6 @@ void ULoginUI::NativeConstruct()
 	_loginBt = Cast<UButton>(WidgetTree->FindWidget("LoginBt"));
 	_editText = Cast<UEditableText>(WidgetTree->FindWidget("EditText"));
 	_loginBt->OnClicked.AddDynamic(this, &ULoginUI::OnClickedFunc);
-
 }
 
 void ULoginUI::OnClickedFunc()
@@ -53,6 +52,14 @@ void ULoginUI::OnClickedFunc()
 		return;
 	}
 
+	if (gameInstance->GetSocket() == nullptr) return;
+
+	// 로그인 체크
+	if (gameInstance->GetSocket()->GetisConnect() == false)
+	{
+		gameInstance->GetSocket()->ConnectToServer();
+		return;
+	}
 
 	// 언리얼 클라 확인 패킷 보내기
 	FString sendData = L"/i am unreal";

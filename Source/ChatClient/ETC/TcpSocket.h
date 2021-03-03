@@ -107,7 +107,7 @@ public:
 
 	void PacketProcessor(const FPacket& packet);
 
-	void GotLogin(const FString& data);
+	void GotLogin(FString data);
 	void GotSendData(const FString& data);
 
 public:

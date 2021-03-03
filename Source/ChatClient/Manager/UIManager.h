@@ -19,6 +19,7 @@ public:
 	void ShowToast(FString& text);
 	void SetGameInstance();
 
+public:
 	UMainUI*	GetMainUI() { return _mainUI;  };
 	ULoginUI*	GetLoginUI() { return _loginUI; };
 	void		SetMainUI(UMainUI* mainUI) { _mainUI = mainUI; };

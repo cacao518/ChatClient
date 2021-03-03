@@ -25,6 +25,9 @@ public:
 		void			OnClickedFunc();
 
 public:
+	UScrollBox*		GetScrollBox() { return _scrollBox; };
+
+public:
 	UEditableText*	_editText;
 	UButton*		_sendBt;
 	UScrollBox*		_scrollBox;

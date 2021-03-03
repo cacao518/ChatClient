@@ -3,11 +3,12 @@
 #include "TcpSocket.h"
 #include "../Manager/MyGameInstance.h"
 #include "Engine/World.h"
-#include "Components/ScrollBox.h"
-#include "Components/TextBlock.h"
+//#include "Components/ScrollBox.h"
+//#include "Components/TextBlock.h"
 #include "../UI/MainUI.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetTree.h"
+#include "Runtime/UMG/Public/UMG.h"
 
 UTcpSocket::UTcpSocket()
 {
@@ -36,6 +37,9 @@ void UTcpSocket::ConnectToServer()
 
 	_connected = _socket->Connect(*addr);
 
+	if(_connected == true)
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Connect Success.")));
+
 	_socket->SetNonBlocking(true);
 }
 
@@ -47,7 +51,7 @@ int UTcpSocket::Send(FString& data)
 	data.AppendChars(tchar, _tcslen(tchar));
 	
 	char retBuf[1024];
-	wcstombs(retBuf, *data, BUFSIZE);
+	wcstombs(retBuf, *data, 1024);
 
 	_socket->Send(reinterpret_cast<const uint8*>(retBuf), strlen(retBuf), sentLen);
 	
@@ -57,7 +61,7 @@ int UTcpSocket::Send(FString& data)
 FPacket UTcpSocket::Recv()
 {
 	int readLen = 0;
-	bool isRecv = _socket->Recv(_buf, BUFSIZE, readLen);
+	bool isRecv = _socket->Recv(_buf, 1024, readLen);
 	
 	// 나중에 앞부분 몇바이트는 패킷종류로 구분해서 읽어내자..
 	if (isRecv == true && readLen != 0)
@@ -133,14 +137,16 @@ void UTcpSocket::PacketProcessor(const FPacket& packet)
 }
 
 // 로그인 패킷 받았을 때
-void UTcpSocket::GotLogin(const FString & data)
+void UTcpSocket::GotLogin(FString data)
 {
 	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
 	if (gameInstance == nullptr) return;
 
+	if (gameInstance->GetSocket()->GetisConnect() == false) return;
 
 	// 이름 설정
-	gameInstance->GetSocket()->_userInfo->name = data;
+	_userInfo->name = data;
+	FString a = _userInfo->name;
 
 	// 레벨이동
 	UGameplayStatics::OpenLevel(gameInstance, FName("Lv_Main"));
@@ -154,24 +160,24 @@ void UTcpSocket::GotSendData(const FString & data)
 
 	string str = TCHAR_TO_ANSI(*data);
 
-	auto startOffset = str.find('[');
+	//auto startOffset = str.find('[');
 	auto endOffset = str.find(']');
 
-	string name = str.substr(startOffset, endOffset); // 이름 얻어내기
-	str.erase(startOffset, endOffset+1); // 이름 자르기
+	string name = str.substr(1, endOffset-1); // 이름 얻어내기
+	str.erase(0, endOffset+3); // 이름 자르기  " : " 3글자 자르기
 	
 	FString finalName(name.c_str());
 	FString finalData(str.c_str());
 
 	UMainUI* mainUI = gameInstance->GetUIManager().GetMainUI();
-	UScrollBox* scrollBox = mainUI->_scrollBox;
+	UScrollBox* scrollBox = mainUI->GetScrollBox();
 
 	// 내가 보냈다면 오른쪽으로 말풍선 출력
 	if (finalName == _userInfo->name)
 	{
 		FString path = FString("/Game/2DSideScrollerCPP/Blueprints/BP_BallonRight.BP_BallonRight_C");
 		UClass* ballonRightUI = ConstructorHelpersInternal::FindOrLoadClass(path, UUserWidget::StaticClass());
-		UUserWidget* ballonRightWidget = CreateWidget<UUserWidget>(GetWorld(), ballonRightUI);
+		UUserWidget* ballonRightWidget = CreateWidget<UUserWidget>(gameInstance->GetWorld(), ballonRightUI);
 
 		if (ballonRightWidget != nullptr)
 		{
@@ -186,7 +192,7 @@ void UTcpSocket::GotSendData(const FString & data)
 	{
 		FString path = FString("/Game/2DSideScrollerCPP/Blueprints/BP_BallonLeft.BP_BallonLeft_C");
 		UClass* ballonLeftUI = ConstructorHelpersInternal::FindOrLoadClass(path, UUserWidget::StaticClass());
-		UUserWidget* ballonLeftWidget = CreateWidget<UUserWidget>(GetWorld(), ballonLeftUI);
+		UUserWidget* ballonLeftWidget = CreateWidget<UUserWidget>(gameInstance->GetWorld(), ballonLeftUI);
 
 		if (ballonLeftWidget != nullptr)
 		{

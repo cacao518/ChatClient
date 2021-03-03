@@ -25,6 +25,7 @@ void AMainLevel::BeginPlay()
 		mainUI = CreateWidget<UMainUI>(GetWorld(), mainUI_class);
 		if (mainUI != nullptr)
 		{
+			_gameInstance->GetUIManager().SetMainUI(mainUI);
 			mainUI->AddToViewport();
 		}
 	}
