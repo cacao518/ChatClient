@@ -15,6 +15,8 @@ void ULoginUI::NativeConstruct()
 	_loginBt = Cast<UButton>(WidgetTree->FindWidget("LoginBt"));
 	_editText = Cast<UEditableText>(WidgetTree->FindWidget("EditText"));
 	_loginBt->OnClicked.AddDynamic(this, &ULoginUI::OnClickedFunc);
+
+
 }
 
 void ULoginUI::OnClickedFunc()
@@ -22,6 +24,11 @@ void ULoginUI::OnClickedFunc()
 	UE_LOG(LogTemp, Warning, TEXT("Test"));
 	UMyGameInstance* gameInstance = Cast< UMyGameInstance>(GetGameInstance());
 	if (gameInstance == nullptr) return;
+
+	// 서버 연결 시도
+	//if (gameInstance->GetSocket() != nullptr &&
+	//	gameInstance->GetSocket()->GetisConnect() == false)
+	//	gameInstance->GetSocket()->ConnectToServer();
 
 	if (gameInstance->GetSocket()->GetisConnect() == false)
 	{

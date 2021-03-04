@@ -10,7 +10,7 @@
 #include <string>
 #include <set>
 #include "UObject/Object.h"
-//#include "Kismet/BlueprintFunctionLibrary.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 #include "TcpSocket.generated.h"
 
 using namespace std;
@@ -50,10 +50,11 @@ struct FUserInfo {
 };
 struct FRoomInfo {
 	int					_id;				// 방아이디
-	FString				_name;			// 방이름
-	bool				_isLobby;		// 로비인가?
-	FUserInfo			_master;			// 방장 정보
-	set<FUserInfo>		_userInfoSet;	// 방에 있는 유저 정보
+	FString				_name;				// 방이름
+	int					_userNum;				// 방아이디
+	//bool				_isLobby;		// 로비인가?
+	//FUserInfo			_master;			// 방장 정보
+	//set<FUserInfo>		_userInfoSet;	// 방에 있는 유저 정보
 };
 
 
@@ -69,7 +70,7 @@ struct FPacket {
 };
 
 UCLASS(Blueprintable, BlueprintType)
-class CHATCLIENT_API UTcpSocket : public UObject
+class CHATCLIENT_API UTcpSocket : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
@@ -92,11 +93,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool GetisConnect() { return _connected; };
 
+	UFUNCTION()
+	void ButtonClickEvent();
+
 	void PacketProcessor(const FPacket& packet);
 
 	void GotLogin(string data);
 	void GotSendData(const string& data);
 	void GotShowRoomInfo(const string& data);
+	void GotShowRoom(const string& data);
 	void GotEnterRoom(const string& data);
 	void GotLeaveRoom(const string& data);
 	FVector2D GetSizeBallon(FString data);
@@ -110,5 +115,4 @@ public:
 	bool _connected = false;
 
 	FUserInfo _userInfo;			// 유저 정보
-
 };

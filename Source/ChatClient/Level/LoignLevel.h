@@ -22,6 +22,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	void CreateMainUI();
+	void CreateLoginUI();
 
 public:
 	UMyGameInstance* _gameInstance;

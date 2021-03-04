@@ -83,3 +83,21 @@ void ALoignLevel::CreateMainUI()
 		}
 	}
 }
+
+void ALoignLevel::CreateLoginUI()
+{
+	if (mainUI == nullptr) return;
+
+	// 채팅창 없애고 로그인창 띄우기
+	mainUI->SetVisibility(ESlateVisibility::Collapsed);
+
+	if (loginUI_class != nullptr)
+	{
+		loginUI = CreateWidget<ULoginUI>(GetWorld(), loginUI_class);
+		if (loginUI != nullptr)
+		{
+			_gameInstance->GetUIManager().SetLoginUI(loginUI);
+			loginUI->AddToViewport();
+		}
+	}
+}

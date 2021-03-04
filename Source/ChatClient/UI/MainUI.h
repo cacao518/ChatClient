@@ -22,7 +22,13 @@ public:
 	virtual void	NativeConstruct() override;
 
 	UFUNCTION()
-		void			OnClickedFunc();
+		void			OnClickedFunc_SendBt();
+	UFUNCTION()
+		void			OnClickedFunc_RoomAddBt();
+	UFUNCTION()
+		void			OnClickedFunc_RoomListBt();
+	UFUNCTION()
+		void			OnClickedFunc_ExitBt();
 
 public:
 	UScrollBox*		GetScrollBox() { return _scrollBox; };
@@ -30,11 +36,17 @@ public:
 
 public:
 	UEditableText*	_editText;
-	UButton*		_sendBt;
 	UScrollBox*		_scrollBox;
 
 	UScrollBox*		_userScroll;
 	UTextBlock*		_myUserNameText;
 	UTextBlock*		_curRoomNameText;
 	UTextBlock*		_curUserNumText;
+
+	UButton*		_sendBt;
+	UButton*		_roomAddBt;
+	UButton*		_roomListBt;
+	UButton*		_exitBt;
+
+	UUserWidget*	_roomListUIWidget = nullptr;
 };

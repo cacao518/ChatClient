@@ -9,6 +9,8 @@
 #include "../Manager/MyGameInstance.h"
 //#include "Components/ScrollBox.h"
 #include "Runtime/UMG/Public/UMG.h"
+#include "../Manager/UIManager.h"
+#include "../Level/LoignLevel.h"
 
 void UMainUI::NativeConstruct()
 {
@@ -25,10 +27,17 @@ void UMainUI::NativeConstruct()
 	_curRoomNameText = Cast<UTextBlock>(WidgetTree->FindWidget("roomNameText"));
 	_curUserNumText = Cast<UTextBlock>(WidgetTree->FindWidget("userNumText"));
 
-	_sendBt->OnClicked.AddDynamic(this, &UMainUI::OnClickedFunc);
+	_roomAddBt = Cast<UButton>(WidgetTree->FindWidget("menuBt1"));
+	_roomListBt = Cast<UButton>(WidgetTree->FindWidget("menuBt2"));
+	_exitBt = Cast<UButton>(WidgetTree->FindWidget("menuBt3"));
+
+	_sendBt->OnClicked.AddDynamic(this, &UMainUI::OnClickedFunc_SendBt);
+	_roomAddBt->OnClicked.AddDynamic(this, &UMainUI::OnClickedFunc_RoomAddBt);
+	_roomListBt->OnClicked.AddDynamic(this, &UMainUI::OnClickedFunc_RoomListBt);
+	_exitBt->OnClicked.AddDynamic(this, &UMainUI::OnClickedFunc_ExitBt);
 }
 
-void UMainUI::OnClickedFunc()
+void UMainUI::OnClickedFunc_SendBt()
 {
 	UMyGameInstance* gameInstance = Cast< UMyGameInstance>(GetGameInstance());
 
@@ -41,5 +50,48 @@ void UMainUI::OnClickedFunc()
 		gameInstance->GetSocket()->Send( editTextStr );
 
 	_editText->SetText(FText::FromString(""));
+
+}
+
+void UMainUI::OnClickedFunc_RoomAddBt()
+{
+}
+
+void UMainUI::OnClickedFunc_RoomListBt()
+{
+	UMyGameInstance* gameInstance = Cast< UMyGameInstance>(GetGameInstance());
+	if (gameInstance == nullptr) return;
+
+	// 룸 리스트 위젯 생성
+	FString path = FString("/Game/2DSideScrollerCPP/Blueprints/BP_RoomList.BP_RoomList_C");
+	UClass* roomListUI = ConstructorHelpersInternal::FindOrLoadClass(path, UUserWidget::StaticClass());
+	_roomListUIWidget = CreateWidget<UUserWidget>(GetWorld(), roomListUI);
+	
+	if (_roomListUIWidget != nullptr)
+	{
+		_roomListUIWidget->AddToViewport();
+
+		// 모든 룸 정보 갖고오기
+		FString sendData = L"/room";
+		if (gameInstance->GetSocket()->GetisConnect() == true)
+			gameInstance->GetSocket()->Send(sendData);
+	}
+
+
+
+}
+
+void UMainUI::OnClickedFunc_ExitBt()
+{
+	UMyGameInstance* gameInstance = Cast< UMyGameInstance>(GetGameInstance());
+	if (gameInstance == nullptr) return;
+
+	// 나가기
+	FString sendData = L"/exit";
+	if (gameInstance->GetSocket()->GetisConnect() == true)
+		gameInstance->GetSocket()->Send(sendData);
+
+	gameInstance->GetUIManager().GetLoginLevel()->CreateLoginUI();
+
 
 }

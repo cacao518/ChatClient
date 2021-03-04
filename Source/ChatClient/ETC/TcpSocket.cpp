@@ -13,6 +13,7 @@
 #include "Runtime/UMG/Public/UMG.h"
 #include "../Manager/UIManager.h"
 #include "../Manager/RoomManager.h"
+#include "Components/Button.h"
 #include <unordered_set>
 
 UTcpSocket::UTcpSocket()
@@ -75,7 +76,6 @@ FPacket UTcpSocket::Recv()
 	int readLen = 0;
 	bool isRecv = _socket->Recv(_buf, 1024, readLen);
 	
-	// 나중에 앞부분 몇바이트는 패킷종류로 구분해서 읽어내자..
 	if (isRecv == true && readLen != 0)
 	{
 		char ansi[1024];
@@ -87,6 +87,7 @@ FPacket UTcpSocket::Recv()
 		EPacketKind pakectKind;
 		string data;
 
+		// 스트림 처리
 		while (1)
 		{
 			auto startOffset = str.find('{');
@@ -126,7 +127,6 @@ FPacket UTcpSocket::Recv()
 				////mbstowcs(retBuf, ansi, readLen);
 				//mbstowcs(retBuf, str.c_str(), readLen);
 				//return FPacket{ pakectKind, FString(retBuf) };
-
 			}
 		}
 	}
@@ -156,6 +156,10 @@ void UTcpSocket::PacketProcessor(const FPacket& packet)
 
 		case EPacketKind::LeaveRoom:
 			GotLeaveRoom(packet.data);
+			break;
+
+		case EPacketKind::ShowRoom:
+			GotShowRoom(packet.data);
 			break;
 	}
 }
@@ -296,6 +300,45 @@ void UTcpSocket::GotShowRoomInfo(const string & data)
 
 }
 
+void UTcpSocket::GotShowRoom(const string & data)
+{
+	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
+	if (gameInstance == nullptr) return;
+
+	// 현재 방 유저 정보 갱신
+	gameInstance->GetRoomManager().UpdateAllRoomInfo(data);
+
+	if (gameInstance->GetRoomManager().GetCurUserSet().size() == 0) return;
+
+	/* 방 스크롤 박스에 방 정보 추가 */
+	FString path = FString("/Game/2DSideScrollerCPP/Blueprints/BP_RoomSlot.BP_RoomSlot_C");
+	UUserWidget* roomListUIWidget = gameInstance->GetUIManager().GetMainUI()->_roomListUIWidget;
+	UScrollBox* scrollBox = Cast<UScrollBox>(roomListUIWidget->WidgetTree->FindWidget("roomScroll"));
+
+	if (scrollBox == nullptr) return;
+	scrollBox->ClearChildren();
+
+	unordered_map<int, FRoomInfo> id_roomMap = gameInstance->GetRoomManager().GetID_RoomMap();
+	for (auto iter : id_roomMap)
+	{
+		FRoomInfo roomInfo = iter.second;
+
+		UClass* roomSlotUI = ConstructorHelpersInternal::FindOrLoadClass(path, UUserWidget::StaticClass());
+		UUserWidget* roomSlotUIWidget = CreateWidget<UUserWidget>(gameInstance->GetWorld(), roomSlotUI);  // 방 정보 풍선
+		UTextBlock* _nameText = Cast<UTextBlock>(roomSlotUIWidget->WidgetTree->FindWidget("roomNameText"));     // 방 정보 풍선의 방이름
+		UTextBlock* _userNumText = Cast<UTextBlock>(roomSlotUIWidget->WidgetTree->FindWidget("userNumText"));     // 방 정보 풍선의 유저수
+		UButton* _enterBt = Cast<UButton>(roomSlotUIWidget->WidgetTree->FindWidget("enterBt"));					// 방 정보 풍선의 입장버튼
+
+		_nameText->SetText(FText::AsCultureInvariant(roomInfo._name));
+		_userNumText->SetText(FText::AsCultureInvariant(FString::FromInt(roomInfo._userNum)));
+		_nameText->SetText(FText::AsCultureInvariant(roomInfo._name));
+		scrollBox->AddChild(roomSlotUIWidget);													//스크롤 박스에 추가
+
+		//_enterBt->OnClicked.AddDynamic(this, &UTcpSocket::ButtonClickEvent);
+	}
+
+}
+
 void UTcpSocket::GotEnterRoom(const string & data)
 {
 	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
@@ -354,4 +397,9 @@ FVector2D UTcpSocket::GetSizeBallon(FString data)
 		}
 	}
 	return FVector2D(maxX, y);
+}
+
+void UTcpSocket::ButtonClickEvent()
+{
+
 }
