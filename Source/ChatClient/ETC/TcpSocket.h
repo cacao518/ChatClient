@@ -51,7 +51,7 @@ struct FUserInfo {
 struct FRoomInfo {
 	int					_id;				// 방아이디
 	FString				_name;				// 방이름
-	int					_userNum;				// 방아이디
+	int					_userNum;				// 유저수
 	//bool				_isLobby;		// 로비인가?
 	//FUserInfo			_master;			// 방장 정보
 	//set<FUserInfo>		_userInfoSet;	// 방에 있는 유저 정보
@@ -93,8 +93,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool GetisConnect() { return _connected; };
 
-	UFUNCTION()
-	void ButtonClickEvent();
 
 	void PacketProcessor(const FPacket& packet);
 
@@ -104,6 +102,8 @@ public:
 	void GotShowRoom(const string& data);
 	void GotEnterRoom(const string& data);
 	void GotLeaveRoom(const string& data);
+	void GotJoinRoom(const string& data);
+	void GotWhisper(const string& data);
 	FVector2D GetSizeBallon(FString data);
 
 public:

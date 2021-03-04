@@ -37,6 +37,7 @@ void UMainUI::NativeConstruct()
 	_exitBt->OnClicked.AddDynamic(this, &UMainUI::OnClickedFunc_ExitBt);
 }
 
+// 채팅 전송 버튼 
 void UMainUI::OnClickedFunc_SendBt()
 {
 	UMyGameInstance* gameInstance = Cast< UMyGameInstance>(GetGameInstance());
@@ -53,10 +54,24 @@ void UMainUI::OnClickedFunc_SendBt()
 
 }
 
+// 방 생성 버튼
 void UMainUI::OnClickedFunc_RoomAddBt()
 {
+	UMyGameInstance* gameInstance = Cast< UMyGameInstance>(GetGameInstance());
+	if (gameInstance == nullptr) return;
+
+	// 룸 리스트 위젯 생성
+	FString path = FString("/Game/2DSideScrollerCPP/Blueprints/BP_AddRoomUI.BP_AddRoomUI_C");
+	UClass* roomAddUI = ConstructorHelpersInternal::FindOrLoadClass(path, UUserWidget::StaticClass());
+	_roomAddUIWidget = CreateWidget<UUserWidget>(GetWorld(), roomAddUI);
+
+	if (_roomAddUIWidget != nullptr)
+	{
+		_roomAddUIWidget->AddToViewport();
+	}
 }
 
+// 방 목록 버튼
 void UMainUI::OnClickedFunc_RoomListBt()
 {
 	UMyGameInstance* gameInstance = Cast< UMyGameInstance>(GetGameInstance());
@@ -76,11 +91,9 @@ void UMainUI::OnClickedFunc_RoomListBt()
 		if (gameInstance->GetSocket()->GetisConnect() == true)
 			gameInstance->GetSocket()->Send(sendData);
 	}
-
-
-
 }
 
+// 나가기 버튼
 void UMainUI::OnClickedFunc_ExitBt()
 {
 	UMyGameInstance* gameInstance = Cast< UMyGameInstance>(GetGameInstance());

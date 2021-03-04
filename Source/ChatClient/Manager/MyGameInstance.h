@@ -17,7 +17,7 @@ class UTcpSocket;
 class RoomManager;
 class UIManager;
 class FText;
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class CHATCLIENT_API UMyGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
@@ -32,7 +32,18 @@ public:
 	UTcpSocket*		GetSocket();
 	RoomManager&	GetRoomManager();
 	UIManager&		GetUIManager();
-	void			ShowToast(FString& text);
+
+
+	UFUNCTION(BlueprintCallable)
+	void	JoinRoom(UPARAM(ref) int id);
+	UFUNCTION(BlueprintCallable)
+	void	AddRoom(UPARAM(ref) FString name);
+	UFUNCTION(BlueprintCallable)
+	void	ShowWhisperUI(UPARAM(ref) FString name);
+	UFUNCTION(BlueprintCallable)
+	void	Whisper(UPARAM(ref) FString name, UPARAM(ref)FString sendData);
+
+	void	ShowToast(FString& text);
 
 public:
 	UTcpSocket* _socket;

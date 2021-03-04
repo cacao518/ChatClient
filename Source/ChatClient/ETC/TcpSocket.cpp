@@ -161,6 +161,14 @@ void UTcpSocket::PacketProcessor(const FPacket& packet)
 		case EPacketKind::ShowRoom:
 			GotShowRoom(packet.data);
 			break;
+
+		case EPacketKind::JoinRoom:
+			GotJoinRoom(packet.data);
+			break;
+
+		case EPacketKind::Whisper:
+			GotWhisper(packet.data);
+			break;
 	}
 }
 
@@ -184,9 +192,6 @@ void UTcpSocket::GotLogin(string data)
 	if (loginLevel == nullptr) return;
 
 	loginLevel->CreateMainUI();
-
-	FString text = TEXT("로그인 되었습니다.");
-	gameInstance->ShowToast(text);
 
 	//UGameplayStatics::OpenLevel(gameInstance->GetWorld(), FName("Lv_Main"));
 }
@@ -273,12 +278,6 @@ void UTcpSocket::GotShowRoomInfo(const string & data)
 
 	if (gameInstance->GetRoomManager().GetCurUserSet().size() == 0) return;
 
-	// UI 반영
-	FString curNum = FString::FromInt(gameInstance->GetRoomManager().GetCurUserSet().size());
-	gameInstance->GetUIManager().GetMainUI()->_curUserNumText->SetText(FText::AsCultureInvariant(curNum));			// 현재 방 유저 수
-	gameInstance->GetUIManager().GetMainUI()->_curRoomNameText->SetText(FText::AsCultureInvariant(_userInfo._roomName)); // 현재 방 이름
-	gameInstance->GetUIManager().GetMainUI()->_myUserNameText->SetText(FText::AsCultureInvariant(_userInfo._name)); // 내 유저 이름
-
 	/* 유저 스크롤 박스에 유저 정보 추가 */
 	FString path = FString("/Game/2DSideScrollerCPP/Blueprints/BP_UserBalloon.BP_UserBalloon_C");
 	UScrollBox* scrollBox = gameInstance->GetUIManager().GetMainUI()->GetUserScrollBox();					// 유저 정보 담는 스크롤 박스
@@ -289,6 +288,16 @@ void UTcpSocket::GotShowRoomInfo(const string & data)
 	for (FUserInfo* userInfo : userInfoSet)
 	{
 		if (userInfo == nullptr) continue;
+		if (userInfo->_name == _userInfo._name) // 내이름이랑 같다면?? 
+		{
+			// UI 반영
+			_userInfo._roomName = userInfo->_roomName;
+			FString curNum = FString::FromInt(gameInstance->GetRoomManager().GetCurUserSet().size());
+			gameInstance->GetUIManager().GetMainUI()->_curUserNumText->SetText(FText::AsCultureInvariant(curNum));			// 현재 방 유저 수
+			gameInstance->GetUIManager().GetMainUI()->_curRoomNameText->SetText(FText::AsCultureInvariant(_userInfo._roomName)); // 현재 방 이름
+			gameInstance->GetUIManager().GetMainUI()->_myUserNameText->SetText(FText::AsCultureInvariant(_userInfo._name)); // 내 유저 이름
+		}
+
 		UClass* userBalloonUI = ConstructorHelpersInternal::FindOrLoadClass(path, UUserWidget::StaticClass());
 		UUserWidget* userBalloonWidget = CreateWidget<UUserWidget>(gameInstance->GetWorld(), userBalloonUI);  // 유저 정보 풍선
 		UTextBlock* _nameText = Cast<UTextBlock>(userBalloonWidget->WidgetTree->FindWidget("nameText"));     // 유저 정보 풍선의 유저이름
@@ -305,10 +314,17 @@ void UTcpSocket::GotShowRoom(const string & data)
 	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
 	if (gameInstance == nullptr) return;
 
-	// 현재 방 유저 정보 갱신
+	// 전체 방 유저 정보 갱신
 	gameInstance->GetRoomManager().UpdateAllRoomInfo(data);
+	unordered_map<int, FRoomInfo> id_roomMap = gameInstance->GetRoomManager().GetID_RoomMap();
 
-	if (gameInstance->GetRoomManager().GetCurUserSet().size() == 0) return;
+	if (id_roomMap.size() == 0) return;
+
+	//// 내 방 이름 갱신
+	//_userInfo._roomName = id_roomMap[_userInfo._roomId]._name;
+	//int curNum = id_roomMap[_userInfo._roomId]._userNum;
+	//gameInstance->GetUIManager().GetMainUI()->_curUserNumText->SetText(FText::AsCultureInvariant(FString::FromInt(curNum)));			// 현재 방 유저 수
+	//gameInstance->GetUIManager().GetMainUI()->_curRoomNameText->SetText(FText::AsCultureInvariant(_userInfo._roomName)); // 현재 방 이름
 
 	/* 방 스크롤 박스에 방 정보 추가 */
 	FString path = FString("/Game/2DSideScrollerCPP/Blueprints/BP_RoomSlot.BP_RoomSlot_C");
@@ -318,17 +334,18 @@ void UTcpSocket::GotShowRoom(const string & data)
 	if (scrollBox == nullptr) return;
 	scrollBox->ClearChildren();
 
-	unordered_map<int, FRoomInfo> id_roomMap = gameInstance->GetRoomManager().GetID_RoomMap();
 	for (auto iter : id_roomMap)
 	{
 		FRoomInfo roomInfo = iter.second;
 
 		UClass* roomSlotUI = ConstructorHelpersInternal::FindOrLoadClass(path, UUserWidget::StaticClass());
 		UUserWidget* roomSlotUIWidget = CreateWidget<UUserWidget>(gameInstance->GetWorld(), roomSlotUI);  // 방 정보 풍선
+		UTextBlock* _roomNumText = Cast<UTextBlock>(roomSlotUIWidget->WidgetTree->FindWidget("roomNumText"));     // 방 정보 풍선의 방번호
 		UTextBlock* _nameText = Cast<UTextBlock>(roomSlotUIWidget->WidgetTree->FindWidget("roomNameText"));     // 방 정보 풍선의 방이름
 		UTextBlock* _userNumText = Cast<UTextBlock>(roomSlotUIWidget->WidgetTree->FindWidget("userNumText"));     // 방 정보 풍선의 유저수
 		UButton* _enterBt = Cast<UButton>(roomSlotUIWidget->WidgetTree->FindWidget("enterBt"));					// 방 정보 풍선의 입장버튼
 
+		_roomNumText->SetText(FText::AsCultureInvariant(FString::FromInt(roomInfo._id)));
 		_nameText->SetText(FText::AsCultureInvariant(roomInfo._name));
 		_userNumText->SetText(FText::AsCultureInvariant(FString::FromInt(roomInfo._userNum)));
 		_nameText->SetText(FText::AsCultureInvariant(roomInfo._name));
@@ -359,6 +376,43 @@ void UTcpSocket::GotLeaveRoom(const string & data)
 	FString sendData = L"/r " + FString::FromInt(gameInstance->GetSocket()->_userInfo._roomId);
 	if (gameInstance->GetSocket()->GetisConnect() == true)
 		gameInstance->GetSocket()->Send(sendData);
+}
+
+void UTcpSocket::GotJoinRoom(const string & data)
+{
+	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
+	if (gameInstance == nullptr) return;
+
+	_userInfo._roomId = atoi(data.c_str()); // 현재 내 방 번호 갱신
+
+	// 새로 들어간방 방 유저 정보 갱신하기
+	FString sendData = L"/r " + FString::FromInt(_userInfo._roomId);
+	if (gameInstance->GetSocket()->GetisConnect() == true)
+		gameInstance->GetSocket()->Send(sendData);
+
+	// 채팅창 비우기
+	UMainUI* mainUI = gameInstance->GetUIManager().GetMainUI();
+	UScrollBox* chatScrollBox = mainUI->GetScrollBox();
+	chatScrollBox->ClearChildren();
+
+	if (mainUI->_roomListUIWidget != nullptr)
+		mainUI->_roomListUIWidget->RemoveFromViewport();
+
+	FString text = TEXT("방에 참가하였습니다.");
+	gameInstance->ShowToast(text);
+}
+
+void UTcpSocket::GotWhisper(const string & data)
+{
+	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
+	if (gameInstance == nullptr) return;
+
+	// 멀티바이트 -> 유니코드로 변환
+	wchar_t data_uni[1024];
+	mbstowcs(data_uni, data.c_str(), data.size());
+
+	FString text = FString(data_uni);
+	gameInstance->ShowToast(text);
 }
 
 FVector2D UTcpSocket::GetSizeBallon(FString data)
@@ -399,7 +453,3 @@ FVector2D UTcpSocket::GetSizeBallon(FString data)
 	return FVector2D(maxX, y);
 }
 
-void UTcpSocket::ButtonClickEvent()
-{
-
-}

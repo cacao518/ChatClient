@@ -8,11 +8,13 @@
 #include <string>
 #include <vector>
 #include "../ETC/TcpSocket.h"
+
 /**
  * 
  */
 struct FRoomInfo;
 struct FUserInfo;
+
 class CHATCLIENT_API RoomManager
 {
 public:
@@ -24,15 +26,12 @@ public:
 	RoomManager();
 	~RoomManager();
 
-	UFUNCTION()
-	void JoinRoom(int id);
-
 	void UpdateCurUserInfo(const string& data);
 	void UpdateAllRoomInfo(const string& data);
 
-	ID_RoomMap& GetID_RoomMap() { return _id_roomMap; };
-	Name_RoomMap& GetName_RoomMap() { return _name_roomMap; };
-	curUserSet& GetCurUserSet() { return _curUserSet; };
+	ID_RoomMap&			GetID_RoomMap() { return _id_roomMap; };
+	Name_RoomMap&		GetName_RoomMap() { return _name_roomMap; };
+	curUserSet&			GetCurUserSet() { return _curUserSet; };
 
 private:
 

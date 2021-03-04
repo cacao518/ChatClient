@@ -49,4 +49,5 @@ public:
 	UButton*		_exitBt;
 
 	UUserWidget*	_roomListUIWidget = nullptr;
+	UUserWidget*	_roomAddUIWidget = nullptr;
 };

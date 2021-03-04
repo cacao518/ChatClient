@@ -15,9 +15,7 @@ RoomManager::~RoomManager()
 {
 }
 
-void RoomManager::JoinRoom(int id)
-{
-}
+
 
 void RoomManager::UpdateCurUserInfo(const string & data)
 {
@@ -27,6 +25,12 @@ void RoomManager::UpdateCurUserInfo(const string & data)
 	_curUserSet.clear();
 
 	string str = data;
+	auto roomNameOffset = str.find(':');
+	if (roomNameOffset == string::npos) return;
+
+	string roomName = str.substr(0, roomNameOffset);
+	str.erase(0, roomNameOffset + 1);
+
 	while (1)
 	{
 		auto idOffset = str.find('(');
@@ -49,7 +53,7 @@ void RoomManager::UpdateCurUserInfo(const string & data)
 
 		
 		// 현재 방에 있는 유저 정보에 저장
-		_curUserSet.insert( new FUserInfo{id , finalName, 0, FString("")} );
+		_curUserSet.insert( new FUserInfo{id , finalName, 0, FString(roomName.c_str())} );
 	}
 }
 
@@ -72,7 +76,7 @@ void RoomManager::UpdateAllRoomInfo(const string & data)
 		str.erase(0, nameOffset + 1);
 		name += '\0';
 
-		auto userNumOffset = str.find('(');
+		auto userNumOffset = str.find(')');
 		string userNum_s = str.substr(0, userNumOffset);
 		str.erase(0, userNumOffset + 1);
 		int userNum = atoi(userNum_s.c_str());
