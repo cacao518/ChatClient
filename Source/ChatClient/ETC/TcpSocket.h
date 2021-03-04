@@ -37,37 +37,24 @@ enum class EPacketKind : uint8 {
 	JoinRoom,			//		방 참여 : /join 방번호  
 	Kick,				//		강퇴(방장만가능) : /kick 이름
 	SendData,
+	EnterRoom,
 	End
 };
 
-struct FUserInfo;
-struct FRoomInfo {
-	int					id;				// 방아이디
-	int					name;			// 방이름
-	bool				isLobby;		// 로비인가?
-	FUserInfo*			master;			// 방장 정보
-	set<FUserInfo*>		userInfoSet;	// 방에 있는 유저 정보
-
-	FRoomInfo() {
-		//master = new FUserInfo();
-	}
-	~FRoomInfo() {
-		//delete master;
-	}
-};
-
 struct FUserInfo {
-	int					id;				// 유저 아이디
-	FString				name;			// 유저 이름
-	struct FRoomInfo*	roomInfo;		// 유저가 있는 방 정보
-
-	FUserInfo() {
-		//roomInfo = new FRoomInfo();
-	}
-	~FUserInfo() {
-		//delete roomInfo;
-	}
+	int					_id;			// 유저 아이디
+	FString				_name;			// 유저 이름
+	int					_roomId;		// 유저가 있는 방 정보
+	FString				_roomName;		// 유저가 있는 방 정보
 };
+struct FRoomInfo {
+	int					_id;				// 방아이디
+	FString				_name;			// 방이름
+	bool				_isLobby;		// 로비인가?
+	FUserInfo			_master;			// 방장 정보
+	set<FUserInfo>		_userInfoSet;	// 방에 있는 유저 정보
+};
+
 
 USTRUCT(Atomic, BlueprintType)
 struct FPacket {
@@ -77,8 +64,7 @@ struct FPacket {
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EPacketKind pk;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString data;
+	string data;
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -107,8 +93,10 @@ public:
 
 	void PacketProcessor(const FPacket& packet);
 
-	void GotLogin(FString data);
-	void GotSendData(const FString& data);
+	void GotLogin(string data);
+	void GotSendData(const string& data);
+	void GotShowRoomInfo(const string& data);
+	void GotEnterRoom(const string& data);
 
 	FVector2D GetSizeBallon(FString data);
 
@@ -120,6 +108,6 @@ public:
 	FSocket* _socket;
 	bool _connected = false;
 
-	FUserInfo* _userInfo;			// 유저 정보
+	FUserInfo _userInfo;			// 유저 정보
 
 };

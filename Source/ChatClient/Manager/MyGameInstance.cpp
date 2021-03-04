@@ -25,10 +25,11 @@ UMyGameInstance::~UMyGameInstance()
 void UMyGameInstance::OnStart()
 {
 	Super::OnStart();
-
-	_socket = Cast<UTcpSocket>(NewObject<UTcpSocket>());
 	_instance = this;
-	_socket->_userInfo = new FUserInfo();
+
+	/*_socket = Cast<UTcpSocket>(NewObject<UTcpSocket>());
+	_instance = this;
+	_socket->_userInfo = new FUserInfo();*/
 	//_uiMgr.SetGameInstance();
 }
 

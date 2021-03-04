@@ -20,6 +20,7 @@ void AMainLevel::BeginPlay()
 	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
 	if (_gameInstance == nullptr) return;
 
+	// Main UI 생성
 	if (mainUI_class != nullptr)
 	{
 		mainUI = CreateWidget<UMainUI>(GetWorld(), mainUI_class);
@@ -32,10 +33,6 @@ void AMainLevel::BeginPlay()
 
 	// 마우스 커서 보이기
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
-
-
-	UTcpSocket* tt = _gameInstance->GetSocket();
-
 }
 
 void AMainLevel::Tick(float DeltaSeconds)
@@ -43,7 +40,7 @@ void AMainLevel::Tick(float DeltaSeconds)
 	if (_gameInstance == nullptr) return;
 	if (_gameInstance->GetSocket() == nullptr) return;
 
-	FPacket packet = FPacket{ EPacketKind::End, FString("") };
+	FPacket packet = FPacket{ EPacketKind::End, string("") };
 	if (_gameInstance->GetSocket()->GetisConnect() == true)
 		packet = _gameInstance->GetSocket()->Recv();
 	else

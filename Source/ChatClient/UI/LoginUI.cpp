@@ -45,6 +45,12 @@ void ULoginUI::OnClickedFunc()
 		gameInstance->ShowToast(text);
 		return;
 	}
+	if (editTextStr.Len() < 2)
+	{
+		FString text = TEXT("2글자 이상 입력해주세요.");
+		gameInstance->ShowToast(text);
+		return;
+	}
 	if (editTextStr.Len() >= 7)
 	{
 		FString text = TEXT("6글자까지 가능합니다.");

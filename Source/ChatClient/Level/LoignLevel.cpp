@@ -2,6 +2,7 @@
 
 #include "../Level/LoignLevel.h"
 #include "../UI/LoginUI.h"
+#include "../UI/MainUI.h"
 #include "Engine/World.h"
 #include "../Manager/MyGameInstance.h"
 #include "Blueprint/UserWidget.h"
@@ -18,7 +19,18 @@ void ALoignLevel::BeginPlay()
 
 	_gameInstance = Cast<UMyGameInstance>(GetGameInstance());
 	if (_gameInstance == nullptr) return;
+	if (this == nullptr) return;
+	_gameInstance->GetUIManager().SetLoginLevel(this);
 
+	// 소켓 생성
+	_gameInstance->_socket = Cast<UTcpSocket>(NewObject<UTcpSocket>());
+	if (_gameInstance->_socket != nullptr)
+	{
+		_gameInstance->_socket->_userInfo._roomId = 1;
+		_gameInstance->_socket->_userInfo._roomName = "Lobby";
+	}
+
+	// 로그인 UI 생성
 	if (loginUI_class != nullptr)
 	{
 		loginUI = CreateWidget<ULoginUI>(GetWorld(), loginUI_class);
@@ -44,7 +56,7 @@ void ALoignLevel::Tick(float DeltaSeconds)
 	if (_gameInstance == nullptr) return;
 	if (_gameInstance->GetSocket() == nullptr) return;
 
-	FPacket packet = FPacket{ EPacketKind::End, FString("")};
+	FPacket packet = FPacket{ EPacketKind::End, string("")};
 	if (_gameInstance->GetSocket()->GetisConnect() == true)
 		packet = _gameInstance->GetSocket()->Recv();
 	else
@@ -52,4 +64,22 @@ void ALoignLevel::Tick(float DeltaSeconds)
 
 	if (packet.pk == EPacketKind::End) return;
 
+}
+
+void ALoignLevel::CreateMainUI()
+{
+	if (loginUI == nullptr) return;
+
+	// 로그인창 없애고 채팅창 띄우기
+	loginUI->SetVisibility(ESlateVisibility::Collapsed);
+
+	if (mainUI_class != nullptr)
+	{
+		mainUI = CreateWidget<UMainUI>(GetWorld(), mainUI_class);
+		if (mainUI != nullptr)
+		{
+			_gameInstance->GetUIManager().SetMainUI(mainUI);
+			mainUI->AddToViewport();
+		}
+	}
 }

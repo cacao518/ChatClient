@@ -34,7 +34,7 @@ public:
 	UIManager&		GetUIManager();
 	void			ShowToast(FString& text);
 
-private:
+public:
 	UTcpSocket* _socket;
 	static UMyGameInstance* _instance;
 	RoomManager				_roomMgr;

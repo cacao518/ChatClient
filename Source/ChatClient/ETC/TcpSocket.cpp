@@ -6,9 +6,14 @@
 //#include "Components/ScrollBox.h"
 //#include "Components/TextBlock.h"
 #include "../UI/MainUI.h"
+#include "../UI/LoginUI.h"
+#include "../Level/LoignLevel.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetTree.h"
 #include "Runtime/UMG/Public/UMG.h"
+#include "../Manager/UIManager.h"
+#include "../Manager/RoomManager.h"
+#include <unordered_set>
 
 UTcpSocket::UTcpSocket()
 {
@@ -16,7 +21,14 @@ UTcpSocket::UTcpSocket()
 }
 UTcpSocket::~UTcpSocket()
 {
-	//delete _userInfo;
+	//UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
+	//if (gameInstance != nullptr)
+	//{
+	//	FString text = TEXT("서버와 연결이 끊어졌습니다.");
+	//	gameInstance->ShowToast(text);
+	//}
+
+	_socket->Close();
 }
 void UTcpSocket::ConnectToServer()
 {
@@ -103,10 +115,10 @@ FPacket UTcpSocket::Recv()
 				str.erase(std::find(str.begin(), str.end(), '}'));
 				data.push_back('\0');
 
-				wchar_t retBuf[1024];
-				mbstowcs(retBuf, data.c_str(), data.size());
+				//wchar_t retBuf[1024];
+				//mbstowcs(retBuf, data.c_str(), data.size());
 				
-				PacketProcessor(FPacket{ pakectKind, FString(retBuf) });
+				PacketProcessor(FPacket{ pakectKind, string(data) });
 
 				//return FPacket{ pakectKind, FString(retBuf) };
 
@@ -119,7 +131,7 @@ FPacket UTcpSocket::Recv()
 		}
 	}
 
-	return FPacket{ EPacketKind::End, FString("none") };
+	return FPacket{ EPacketKind::End, string("none") };
 }
 
 void UTcpSocket::PacketProcessor(const FPacket& packet)
@@ -133,47 +145,73 @@ void UTcpSocket::PacketProcessor(const FPacket& packet)
 		case EPacketKind::SendData:
 			GotSendData(packet.data);
 			break;
+
+		case EPacketKind::ShowRoomInfo:
+			GotShowRoomInfo(packet.data);
+			break;
+
+		case EPacketKind::EnterRoom:
+			GotEnterRoom(packet.data);
+			break;
 	}
 }
 
 // 로그인 패킷 받았을 때
-void UTcpSocket::GotLogin(FString data)
+void UTcpSocket::GotLogin(string data)
 {
 	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
 	if (gameInstance == nullptr) return;
 
 	if (gameInstance->GetSocket()->GetisConnect() == false) return;
 
-	// 이름 설정
-	_userInfo->name = data;
-	FString a = _userInfo->name;
+	// 유니 -> 멀티바이트 변환
+	wchar_t retBuf[1024];
+	mbstowcs(retBuf, data.c_str(), data.size());
 
-	// 레벨이동
-	UGameplayStatics::OpenLevel(gameInstance->GetWorld(), FName("Lv_Main"));
+	// 이름 설정
+	_userInfo._name = FString(retBuf);
+
+	// 로그인창 없애고 Main UI 생성
+	ALoignLevel* loginLevel = gameInstance->GetUIManager().GetLoginLevel();
+	if (loginLevel == nullptr) return;
+
+	loginLevel->CreateMainUI();
+
+	FString text = TEXT("로그인 되었습니다.");
+	gameInstance->ShowToast(text);
+
+	//UGameplayStatics::OpenLevel(gameInstance->GetWorld(), FName("Lv_Main"));
 }
 
 // 메세지 전송 패킷 받았을 때
-void UTcpSocket::GotSendData(const FString & data)
+void UTcpSocket::GotSendData(const string & data)
 {
 	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
 	if (gameInstance == nullptr) return;
 
-	string str = TCHAR_TO_ANSI(*data);
+	string str = data;
 
 	//auto startOffset = str.find('[');
 	auto endOffset = str.find(']');
 
 	string name = str.substr(1, endOffset-1); // 이름 얻어내기
 	str.erase(0, endOffset+3); // 이름 자르기  " : " 3글자 자르기
-	
-	FString finalName(name.c_str());
-	FString finalData(str.c_str());
+	name += '\0';
+
+	// 멀티바이트 -> 유니코드로 변환
+	wchar_t data_uni[1024];
+	mbstowcs(data_uni, str.c_str(), str.size());
+	wchar_t name_uni[1024];
+	mbstowcs(name_uni, name.c_str(), name.size());
+
+	FString finalName(name_uni);
+	FString finalData(data_uni);
 
 	UMainUI* mainUI = gameInstance->GetUIManager().GetMainUI();
 	UScrollBox* scrollBox = mainUI->GetScrollBox();
 
 	// 내가 보냈다면 오른쪽으로 말풍선 출력
-	if (finalName == _userInfo->name)
+	if (finalName == _userInfo._name)
 	{
 		FString path = FString("/Game/2DSideScrollerCPP/Blueprints/BP_BallonRight.BP_BallonRight_C");
 		UClass* ballonRightUI = ConstructorHelpersInternal::FindOrLoadClass(path, UUserWidget::StaticClass());
@@ -181,13 +219,15 @@ void UTcpSocket::GotSendData(const FString & data)
 
 		if (ballonRightWidget != nullptr)
 		{
+			UTextBlock* _Text = Cast<UTextBlock>(ballonRightWidget->WidgetTree->FindWidget("textBlock"));
+			UCanvasPanel* _panel = Cast <UCanvasPanel> (ballonRightWidget->WidgetTree->FindWidget("panel"));
+
 			scrollBox->AddChild(ballonRightWidget);
 			scrollBox->ScrollToEnd();
-			UTextBlock* _Text = Cast<UTextBlock>(ballonRightWidget->WidgetTree->FindWidget("textBlock"));
 			_Text->SetText(FText::AsCultureInvariant(finalData));
 
-			UCanvasPanelSlot* _panel = Cast<UCanvasPanelSlot>(ballonRightWidget->WidgetTree->FindWidget("ballon_panel"));
-			_panel->SetSize( GetSizeBallon(finalData) );
+			//UCanvasPanelSlot* Slot = Cast<UCanvasPanelSlot>(_panel->Slot);
+			//Slot->SetSize(GetSizeBallon(finalData));
 		}
 	}
 	// 상대방이 보냈다면 왼쪽으로 말풍선 출력
@@ -199,24 +239,69 @@ void UTcpSocket::GotSendData(const FString & data)
 
 		if (ballonLeftWidget != nullptr)
 		{
+			UTextBlock* _Text = Cast<UTextBlock>(ballonLeftWidget->WidgetTree->FindWidget("textBlock"));
+			UTextBlock* _nameText = Cast<UTextBlock>(ballonLeftWidget->WidgetTree->FindWidget("nameText"));
+			UCanvasPanel* _panel = Cast<UCanvasPanel>(ballonLeftWidget->WidgetTree->FindWidget("panel"));
+			
 			scrollBox->AddChild(ballonLeftWidget);
 			scrollBox->ScrollToEnd();
-			UTextBlock* _Text = Cast<UTextBlock>(ballonLeftWidget->WidgetTree->FindWidget("textBlock"));
+			
 			_Text->SetText(FText::AsCultureInvariant(finalData));
-			UTextBlock* _nameText = Cast<UTextBlock>(ballonLeftWidget->WidgetTree->FindWidget("nameText"));
 			_nameText->SetText(FText::AsCultureInvariant(finalName));
 
-			UCanvasPanelSlot* _panel = Cast<UCanvasPanelSlot>(ballonLeftWidget->WidgetTree->FindWidget("ballon_panel"));
-			_panel->SetSize(GetSizeBallon(finalData));
+			//UCanvasPanelSlot* Slot = Cast<UCanvasPanelSlot>(_panel->Slot);
+			//Slot->SetSize(GetSizeBallon(finalData));
 		}
 	}
-	
+}
 
+void UTcpSocket::GotShowRoomInfo(const string & data)
+{
+	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
+	if (gameInstance == nullptr) return;
+	
+	// 현재 방 유저 정보 갱신
+	gameInstance->GetRoomManager().UpdateCurUserInfo(data);
+
+	if (gameInstance->GetRoomManager().GetCurUserSet().size() == 0) return;
+
+	// UI 반영
+	FString curNum = FString::FromInt(gameInstance->GetRoomManager().GetCurUserSet().size());
+	gameInstance->GetUIManager().GetMainUI()->_curUserNumText->SetText(FText::AsCultureInvariant(curNum));			// 현재 방 유저 수
+	gameInstance->GetUIManager().GetMainUI()->_curRoomNameText->SetText(FText::AsCultureInvariant(_userInfo._roomName)); // 현재 방 이름
+	gameInstance->GetUIManager().GetMainUI()->_myUserNameText->SetText(FText::AsCultureInvariant(_userInfo._name)); // 내 유저 이름
+
+	/* 유저 스크롤 박스에 유저 정보 추가 */
+	FString path = FString("/Game/2DSideScrollerCPP/Blueprints/BP_UserBalloon.BP_UserBalloon_C");
+	UScrollBox* scrollBox = gameInstance->GetUIManager().GetMainUI()->GetUserScrollBox();					// 유저 정보 담는 스크롤 박스
+
+	for (FUserInfo* userInfo : gameInstance->GetRoomManager().GetCurUserSet())
+	{
+		UClass* userBalloonUI = ConstructorHelpersInternal::FindOrLoadClass(path, UUserWidget::StaticClass());
+		UUserWidget* userBalloonWidget = CreateWidget<UUserWidget>(gameInstance->GetWorld(), userBalloonUI);  // 유저 정보 풍선
+		UTextBlock* _nameText = Cast<UTextBlock>(userBalloonWidget->WidgetTree->FindWidget("nameText"));     // 유저 정보 풍선의 유저이름
+		_nameText->SetText(FText::AsCultureInvariant(userInfo->_name));									// 유저 정보 풍선의 유저이름 셋팅
+		scrollBox->AddChild(userBalloonWidget);													//스크롤 박스에 추가
+	}
+
+	// 추후에 내 유저 풍선은 제일 위로 올라가게 만들기
+
+}
+
+void UTcpSocket::GotEnterRoom(const string & data)
+{
+	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
+	if (gameInstance == nullptr) return;
+
+	// 현재 방 유저 정보 갱신하기
+	FString sendData = L"/r " + FString::FromInt(gameInstance->GetSocket()->_userInfo._roomId);
+	if (gameInstance->GetSocket()->GetisConnect() == true)
+		gameInstance->GetSocket()->Send(sendData);
 }
 
 FVector2D UTcpSocket::GetSizeBallon(FString data)
 {
-	float x = 0, y = 0;
+	float x = -300.f, y = 120.f;
 	float maxX = 0; // 현재까지 가장 긴 x길이
 
 	for (int i = 0; i < data.Len(); i++)
@@ -225,11 +310,11 @@ FVector2D UTcpSocket::GetSizeBallon(FString data)
 
 		if (data[i] >= 32 && data[i] <= 126)        // 영어,숫자,기본특수문자  
 		{
-			if (maxX >= 400)
+			if (maxX <= -500)
 				y += 40;
 			else if (maxX <= x)
 			{
-				maxX += 15;
+				maxX -= 15;
 				x = 0;
 			}
 			else
@@ -238,15 +323,15 @@ FVector2D UTcpSocket::GetSizeBallon(FString data)
 
 		if (data[i] & 0x80)				// 한글체크 
 		{
-			if (maxX >= 400)
+			if (maxX <= -500)
 				y += 40;
 			else if (maxX <= x)
 			{
-				maxX += 30;
+				maxX -= 30;
 				x = 0;
 			}
 			else
-				x += 30;
+				x -= 30;
 		}
 	}
 	return FVector2D(maxX, y);

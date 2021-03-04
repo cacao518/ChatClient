@@ -10,6 +10,7 @@
  * 
  */
 class ULoginUI;
+class UMainUI;
 class UMyGameInstance;
 UCLASS()
 class CHATCLIENT_API ALoignLevel : public ALevelScriptActor
@@ -20,6 +21,7 @@ public:
 	ALoignLevel();
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
+	void CreateMainUI();
 
 public:
 	UMyGameInstance* _gameInstance;
@@ -27,5 +29,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 		TSubclassOf<ULoginUI> loginUI_class;
 	ULoginUI* loginUI;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
+		TSubclassOf<UMainUI> mainUI_class;
+	UMainUI* mainUI;
 
 };

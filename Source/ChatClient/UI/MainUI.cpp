@@ -19,12 +19,19 @@ void UMainUI::NativeConstruct()
 	_scrollBox = Cast<UScrollBox>(WidgetTree->FindWidget("scroll"));
 	_sendBt = Cast<UButton>(WidgetTree->FindWidget("SendBt"));
 	_editText = Cast<UEditableText>(WidgetTree->FindWidget("editText"));
+	_userScroll = Cast<UScrollBox>(WidgetTree->FindWidget("userScroll"));
+
+	_myUserNameText = Cast<UTextBlock>(WidgetTree->FindWidget("nameText"));
+	_curRoomNameText = Cast<UTextBlock>(WidgetTree->FindWidget("roomNameText"));
+	_curUserNumText = Cast<UTextBlock>(WidgetTree->FindWidget("userNumText"));
 
 	_sendBt->OnClicked.AddDynamic(this, &UMainUI::OnClickedFunc);
 
-	FString text = TEXT("로그인 되었습니다.");
-	gameInstance->ShowToast(text);
 
+	// 현재 방 유저 정보 갱신하기
+	FString sendData = L"/r " + FString::FromInt(gameInstance->GetSocket()->_userInfo._roomId);
+	if (gameInstance->GetSocket()->GetisConnect() == true)
+		gameInstance->GetSocket()->Send(sendData);
 }
 
 void UMainUI::OnClickedFunc()
@@ -33,7 +40,7 @@ void UMainUI::OnClickedFunc()
 
 	if (gameInstance == nullptr) return;
 	if (gameInstance->GetSocket()->GetisConnect() == false) return;
-
+	if (_editText == nullptr) return;
 	// 채팅 보내기
 	FString editTextStr = _editText->GetText().ToString();
 	if (gameInstance->GetSocket()->GetisConnect() == true)

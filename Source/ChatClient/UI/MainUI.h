@@ -12,7 +12,7 @@
 class UEditableText;
 class UButton;
 class UScrollBox;
-
+class UTextBlock;
 UCLASS()
 class CHATCLIENT_API UMainUI : public UUserWidget
 {
@@ -26,9 +26,15 @@ public:
 
 public:
 	UScrollBox*		GetScrollBox() { return _scrollBox; };
+	UScrollBox*		GetUserScrollBox() { return _userScroll; };
 
 public:
 	UEditableText*	_editText;
 	UButton*		_sendBt;
 	UScrollBox*		_scrollBox;
+
+	UScrollBox*		_userScroll;
+	UTextBlock*		_myUserNameText;
+	UTextBlock*		_curRoomNameText;
+	UTextBlock*		_curUserNumText;
 };
