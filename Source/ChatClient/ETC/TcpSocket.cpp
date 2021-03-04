@@ -153,6 +153,10 @@ void UTcpSocket::PacketProcessor(const FPacket& packet)
 		case EPacketKind::EnterRoom:
 			GotEnterRoom(packet.data);
 			break;
+
+		case EPacketKind::LeaveRoom:
+			GotLeaveRoom(packet.data);
+			break;
 	}
 }
 
@@ -274,9 +278,13 @@ void UTcpSocket::GotShowRoomInfo(const string & data)
 	/* 유저 스크롤 박스에 유저 정보 추가 */
 	FString path = FString("/Game/2DSideScrollerCPP/Blueprints/BP_UserBalloon.BP_UserBalloon_C");
 	UScrollBox* scrollBox = gameInstance->GetUIManager().GetMainUI()->GetUserScrollBox();					// 유저 정보 담는 스크롤 박스
+	if (scrollBox == nullptr) return;
+	scrollBox->ClearChildren();
 
-	for (FUserInfo* userInfo : gameInstance->GetRoomManager().GetCurUserSet())
+	set<FUserInfo*> userInfoSet = gameInstance->GetRoomManager().GetCurUserSet();
+	for (FUserInfo* userInfo : userInfoSet)
 	{
+		if (userInfo == nullptr) continue;
 		UClass* userBalloonUI = ConstructorHelpersInternal::FindOrLoadClass(path, UUserWidget::StaticClass());
 		UUserWidget* userBalloonWidget = CreateWidget<UUserWidget>(gameInstance->GetWorld(), userBalloonUI);  // 유저 정보 풍선
 		UTextBlock* _nameText = Cast<UTextBlock>(userBalloonWidget->WidgetTree->FindWidget("nameText"));     // 유저 정보 풍선의 유저이름
@@ -289,6 +297,17 @@ void UTcpSocket::GotShowRoomInfo(const string & data)
 }
 
 void UTcpSocket::GotEnterRoom(const string & data)
+{
+	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
+	if (gameInstance == nullptr) return;
+
+	// 현재 방 유저 정보 갱신하기
+	FString sendData = L"/r " + FString::FromInt(gameInstance->GetSocket()->_userInfo._roomId);
+	if (gameInstance->GetSocket()->GetisConnect() == true)
+		gameInstance->GetSocket()->Send(sendData);
+}
+
+void UTcpSocket::GotLeaveRoom(const string & data)
 {
 	UMyGameInstance* gameInstance = UMyGameInstance::GetMyGameInstance();
 	if (gameInstance == nullptr) return;

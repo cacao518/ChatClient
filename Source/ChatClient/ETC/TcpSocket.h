@@ -38,6 +38,7 @@ enum class EPacketKind : uint8 {
 	Kick,				//		강퇴(방장만가능) : /kick 이름
 	SendData,
 	EnterRoom,
+	LeaveRoom,
 	End
 };
 
@@ -97,7 +98,7 @@ public:
 	void GotSendData(const string& data);
 	void GotShowRoomInfo(const string& data);
 	void GotEnterRoom(const string& data);
-
+	void GotLeaveRoom(const string& data);
 	FVector2D GetSizeBallon(FString data);
 
 public:

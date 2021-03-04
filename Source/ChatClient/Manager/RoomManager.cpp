@@ -25,16 +25,17 @@ void RoomManager::UpdateCurUserInfo(const string & data)
 	string str = data;
 	while (1)
 	{
-		auto idOffset = str.find('{');
+		auto idOffset = str.find('(');
 		if (idOffset == string::npos) break;
 
 		string id_s = str.substr(0, idOffset);
 		str.erase(0, idOffset + 1);
 		int id = atoi(id_s.c_str());
 
-		auto nameOffset = str.find('}');
+		auto nameOffset = str.find(')');
 		string name = str.substr(0, nameOffset);
 		str.erase(0, nameOffset + 1);
+		name += '\0';
 
 		// 멀티바이트 -> 유니코드로 변환
 		wchar_t name_uni[1024];

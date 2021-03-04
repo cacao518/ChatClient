@@ -26,12 +26,6 @@ void UMainUI::NativeConstruct()
 	_curUserNumText = Cast<UTextBlock>(WidgetTree->FindWidget("userNumText"));
 
 	_sendBt->OnClicked.AddDynamic(this, &UMainUI::OnClickedFunc);
-
-
-	// 현재 방 유저 정보 갱신하기
-	FString sendData = L"/r " + FString::FromInt(gameInstance->GetSocket()->_userInfo._roomId);
-	if (gameInstance->GetSocket()->GetisConnect() == true)
-		gameInstance->GetSocket()->Send(sendData);
 }
 
 void UMainUI::OnClickedFunc()
